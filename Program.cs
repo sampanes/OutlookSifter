@@ -99,7 +99,7 @@ static class Program
 
                     string finalOutput = sb.ToString();
 
-                    previewBox.Text = finalOutput;
+                    previewBox.Text = finalOutput.Replace("\n", "\r\n");
                     Clipboard.SetText(finalOutput);
 
                     dropLabel.Text = "CLEAN DATA COPIED!";
