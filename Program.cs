@@ -63,8 +63,11 @@ static class Program
                         if (m.Success) body = m.Groups[1].Value;
                     }
 
+                    // Normalize line endings to \n
+                    body = body.Replace("\r\n", "\n").Replace("\r", "\n");
+
                     // Decode quoted-printable encoding (=XX hex sequences, soft line breaks)
-                    body = Regex.Replace(body, @"=\r?\n", "");
+                    body = Regex.Replace(body, @"=\n", "");
                     body = Regex.Replace(body, @"=([0-9A-Fa-f]{2})", m => Encoding.GetEncoding(1252).GetString(new byte[] { Convert.ToByte(m.Groups[1].Value, 16) }));
 
                     // Mark real paragraph breaks BEFORE stripping tags
