@@ -12,6 +12,7 @@ static class Program
     [STAThread]
     static void Main()
     {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         ApplicationConfiguration.Initialize();
         Form mainForm = new Form { Text = "Universal Email Sifter", Size = new System.Drawing.Size(600, 500), TopMost = true };
         TableLayoutPanel layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2 };
@@ -62,9 +63,16 @@ static class Program
                         if (m.Success) body = m.Groups[1].Value;
                     }
 
+                    // Decode quoted-printable encoding (=XX hex sequences, soft line breaks)
+                    body = Regex.Replace(body, @"=\r?\n", "");
+                    body = Regex.Replace(body, @"=([0-9A-Fa-f]{2})", m => Encoding.GetEncoding(1252).GetString(new byte[] { Convert.ToByte(m.Groups[1].Value, 16) }));
+
                     // Strip HTML tags and decode entities
-                    body = Regex.Replace(body, @"<.*?>", string.Empty);
+                    body = Regex.Replace(body, @"<[^>]*>", string.Empty);
                     body = System.Net.WebUtility.HtmlDecode(body);
+
+                    // Normalize all Unicode dashes/hyphens to plain hyphen
+                    body = Regex.Replace(body, @"[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]", "-");
 
                     // Remove Base64 "Garbage" (images/attachments)
                     body = Regex.Replace(body, @"[A-Za-z0-9+/]{100,}", "");
