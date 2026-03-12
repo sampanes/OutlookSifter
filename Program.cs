@@ -67,7 +67,11 @@ static class Program
                     body = Regex.Replace(body, @"=\r?\n", "");
                     body = Regex.Replace(body, @"=([0-9A-Fa-f]{2})", m => Encoding.GetEncoding(1252).GetString(new byte[] { Convert.ToByte(m.Groups[1].Value, 16) }));
 
-                    // Strip HTML tags and decode entities
+                    // Mark real paragraph breaks BEFORE stripping tags
+                    body = Regex.Replace(body, @"<br\s*/?>", "\n", RegexOptions.IgnoreCase);
+                    body = Regex.Replace(body, @"</(p|div|h[1-6]|li|tr|blockquote)>", "\n\n", RegexOptions.IgnoreCase);
+
+                    // Strip remaining HTML tags and decode entities
                     body = Regex.Replace(body, @"<[^>]*>", string.Empty);
                     body = System.Net.WebUtility.HtmlDecode(body);
 
@@ -76,6 +80,10 @@ static class Program
 
                     // Remove Base64 "Garbage" (images/attachments)
                     body = Regex.Replace(body, @"[A-Za-z0-9+/]{100,}", "");
+
+                    // Join fake newlines (single \n between text) into spaces; keep real paragraph breaks (\n\n)
+                    body = Regex.Replace(body, @"([^\n])\n([^\n])", "$1 $2");
+                    body = Regex.Replace(body, @"\n{3,}", "\n\n");
 
                     // 3. ASSEMBLY: Format the final output
                     StringBuilder sb = new StringBuilder();
